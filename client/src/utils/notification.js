@@ -2,7 +2,7 @@ import { notification } from 'antd';
 
 export const notificationSuccess = (description, message, duration = 3) => {
     notification.success({
-        message,
+        message: message || "Thành công",
         description,
         duration,
     });

@@ -3,7 +3,6 @@ let jwt = require('jsonwebtoken');
 let generationToken = (data, privateKey, expiresIn) => {
     return new Promise((resolve, reject) => {
         jwt.sign(data, privateKey, { expiresIn: expiresIn }, function(err, token) {
-            console.log(token);
             if(err) return reject(err);
             return resolve(token)
         });

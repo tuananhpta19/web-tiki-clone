@@ -1,98 +1,127 @@
-import React, { useState } from 'react';
-import { Table, Tag, Space, Button } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Table, Tag, Popconfirm, Button } from 'antd';
 import CreateUserModal from './CreateUser';
 import BaseLayoutAdmin from '../../../components/BaseLayoutAdmin/BaseLayoutAdmin';
+import { getAllUserAPI, updateStatusAPI } from '../../../api/user';
+import { notificationError, notificationSuccess } from '../../../utils/notification';
+import {
+    Link
+} from 'react-router-dom';
 let DashboardUser = (props) => {
     let [dataListUser, setDataListUser] = useState([]);
     let [visibleModalCreateUser, setVisibleModalCreateUser] = useState(false);
     let [isCreateUserSuccess, setIsCreateUserSuccess] = useState(false);
+    let [isChangeStatusSuccess, setIsChangeStatusSuccess] = useState(false);
+    useEffect(() => {
+        let _getListUsers = async () => {
+            try {
+                let res = await getAllUserAPI();
+                if (res.status === 200) {
+                    console.log(res.data)
+                    let handleData = res.data.data ? res.data.data.map((userItem, index) => {
+                        console.log(userItem)
+                        return {
+                            key: index + 1,
+                            ...userItem
+                        }
+                    }) : [];
+                    setDataListUser(handleData)
+                }
+            } catch (error) {
+                notificationError(error)
+            }
+        }
+        _getListUsers()
+    }, [isCreateUserSuccess, isChangeStatusSuccess])
+
+    let handleBlockUser = async (record, status) => {
+        try {
+            let res = await updateStatusAPI(record._id, { status: status });
+            if (res.status === 200) {
+                setIsChangeStatusSuccess(!isChangeStatusSuccess)
+                notificationSuccess("Cập nhật trạng thái thành công")
+            }
+        } catch (error) {
+            notificationError(error)
+        }
+    }
     const columns = [
         {
-            title: 'Name',
+            title: 'key',
+            dataIndex: 'key',
+            key: 'key',
+        },
+        {
+            title: 'Tên',
             dataIndex: 'name',
             key: 'name',
-            render: text => <a>{text}</a>,
         },
         {
-            title: 'Age',
-            dataIndex: 'age',
-            key: 'age',
+            title: 'email',
+            dataIndex: 'email',
+            key: 'email',
         },
         {
-            title: 'Address',
-            dataIndex: 'address',
-            key: 'address',
+            title: 'trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status) => {
+                let checkStatus = (status) => {
+                    if (status === "active") {
+                        return <Tag color="green">active</Tag>
+                    }
+                    return <Tag color="red">block</Tag>
+                }
+                return (
+                    <>
+                        {checkStatus(status)}
+                    </>
+                )
+            }
         },
         {
-            title: 'Tags',
-            key: 'tags',
-            dataIndex: 'tags',
-            render: tags => (
+            title: 'Hành động',
+            render: (record) => (
                 <>
-                    {tags.map(tag => {
-                        let color = tag.length > 5 ? 'geekblue' : 'green';
-                        if (tag === 'loser') {
-                            color = 'volcano';
-                        }
-                        return (
-                            <Tag color={color} key={tag}>
-                                {tag.toUpperCase()}
-                            </Tag>
-                        );
-                    })}
+                    <Popconfirm
+                        title="Bạn có chắc chắn muốn thay đổi"
+                        onConfirm={() => {
+                            if (record.status === "active") {
+                                handleBlockUser(record, "block")
+                            } else {
+                                handleBlockUser(record, "active")
+                            }
+
+                        }}
+                        okText="Đồng ý"
+                        cancelText="Không"
+                    >
+                        {record.status === "active" ? <Button style={{ background: 'red', color: 'white' }}>Block</Button> : <Button>Active</Button>}
+                    </Popconfirm>
+                    <Button style={{ background: '#8bc34a', color: 'black', marginLeft: "30px" }}> 
+                        <Link to={"/user/"+record._id}>Xem chi tiết</Link>
+                    </Button>
                 </>
-            ),
-        },
-        {
-            title: 'Action',
-            key: 'action',
-            render: (text, record) => (
-                <Space size="middle">
-                    <a>Invite {record.name}</a>
-                    <a>Delete</a>
-                </Space>
+                
             ),
         },
     ];
 
-    const data = [
-        {
-            key: '1',
-            name: 'John Brown',
-            age: 32,
-            address: 'New York No. 1 Lake Park',
-            tags: ['nice', 'developer'],
-        },
-        {
-            key: '2',
-            name: 'Jim Green',
-            age: 42,
-            address: 'London No. 1 Lake Park',
-            tags: ['loser'],
-        },
-        {
-            key: '3',
-            name: 'Joe Black',
-            age: 32,
-            address: 'Sidney No. 1 Lake Park',
-            tags: ['cool', 'teacher'],
-        },
-    ];
     return (
         <BaseLayoutAdmin>
-            <CreateUserModal 
+            <CreateUserModal
                 visibleModalCreateUser={visibleModalCreateUser}
                 setVisibleModalCreateUser={setVisibleModalCreateUser}
                 setIsCreateUserSuccess={setIsCreateUserSuccess}
                 isCreateUserSuccess={isCreateUserSuccess}
             ></CreateUserModal>
-            <div className="user-action" style={{textAlign: 'right', margin: '30px 0', width:'100%'}}>
-                <Button type='primary' onClick={() => {setVisibleModalCreateUser(true)}}>
+            <div className="user-action" style={{ textAlign: 'right', margin: '30px 0', width: '100%' }}>
+                <Button type='primary' onClick={() => { setVisibleModalCreateUser(true) }}>
                     Thêm người dùng
                 </Button>
             </div>
 
-            <Table columns={columns} dataSource={data}></Table>
+            <Table columns={columns} dataSource={dataListUser}></Table>
         </BaseLayoutAdmin>
     );
 }

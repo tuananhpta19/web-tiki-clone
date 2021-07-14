@@ -5,3 +5,9 @@ module.exports.createUser = (data) => {
 module.exports.getUserByEmail = (email) => {
     return UserModel.findOne({email});
 }
+module.exports.getAllUser = (user) => {
+    return UserModel.find({}, {password: 0});
+}
+module.exports.updateStatusUser = (id, status) => {
+    return UserModel.updateOne({_id: id}, {status})
+}

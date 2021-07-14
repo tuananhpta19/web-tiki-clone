@@ -3,7 +3,7 @@ let ProductSchema = mongoose.Schema({
    name: String,
    price: Number,
    sell: Number,
-   thumnail: String,
+   thumnail: Array,
    quantity: Number
 }, { collection: 'prouduct'});
 
