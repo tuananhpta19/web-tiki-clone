@@ -7,10 +7,14 @@ router.post("/login", async function(req, res, next){
     let infoUser = await UserServices.getUserByEmail(email);
     let checkPassword = await comparePassword(password, infoUser.password);
     if(checkPassword){
-        let token = await generationToken({_id: infoUser._id}, "test", "1d")
+        let token = await generationToken({_id: infoUser._id}, "test", "30d")
+        delete infoUser.password
         return res.status(200).json({
             message: 'Đăng nhập thành công',
-            token: token
+            data:{
+                infoUser,
+                token
+            }
         })
     }else{
         return res.status(403).json({
